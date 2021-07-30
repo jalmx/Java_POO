@@ -26,25 +26,9 @@ public class DB implements DatabaseHelper {
             connection = DriverManager.getConnection(query);
         } else {
             connection = DriverManager.getConnection(query);
-            createDB();
+            createTable();
         }
 
-    }
-
-    private boolean isExistDB() {
-        return new File(nameDatabase).exists();
-    }
-
-    private void createDB() throws Exception {
-        String query
-                = "CREATE TABLE '" + nameTable + "' "
-                + "('" + columnId + "' INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,"
-                + " '" + columnTitle + "' TEXT NOT NULL,"
-                + " '" + columnDescription + "' TEXT);";
-
-        Statement st = connection.createStatement();
-        st.executeUpdate(query);
-        st.close();
     }
 
     public static DB getDatabase() throws Exception {
@@ -57,14 +41,66 @@ public class DB implements DatabaseHelper {
         return database;
     }
 
+    private boolean isExistDB() {
+        return new File(nameDatabase).exists();
+    }
+
+    private void createTable() throws Exception {
+        String query
+                = "CREATE TABLE '" + nameTable + "' "
+                + "('" + columnId + "' INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,"
+                + " '" + columnTitle + "' TEXT NOT NULL,"
+                + " '" + columnDescription + "' TEXT);";
+
+        Statement st = connection.createStatement();
+        st.executeUpdate(query);
+        st.close();
+    }
+
     @Override
     public int update(Task task) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        int value = -1;
+        try {
+            Statement st = connection.createStatement();
+
+            String query = String.format(
+                    "UPDATE %s SET %s = '%s', %s = '%s'  WHERE %s=%d ;",
+                    nameTable,
+                    columnTitle,
+                    task.getTitle(),
+                    columnDescription,
+                    task.getDescripcion(),
+                    columnId,
+                    task.getId()
+            );
+            value = st.executeUpdate(query);
+
+            return value;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return value;
+        }
     }
 
     @Override
     public boolean delete(int id) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        try {
+            Statement st = connection.createStatement();
+            final String query = String.format(
+                    "DELETE FROM %s WHERE %s=%d",
+                    nameTable,
+                    columnId,
+                    id
+            );
+
+            int i = st.executeUpdate(query);
+            Log.print("borra al id %d", i);
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+
     }
 
     @Override
@@ -87,6 +123,8 @@ public class DB implements DatabaseHelper {
                 );
             }
 
+            rs.close();
+
             return tasks;
         } catch (Exception e) {
             e.printStackTrace();
@@ -96,12 +134,41 @@ public class DB implements DatabaseHelper {
 
     @Override
     public Task get(int id) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        Task task = null;
+
+        try {
+            Statement st = connection.createStatement();
+
+            String query = String.format(
+                    "SELECT * FROM %s WHERE %s=%d ",
+                    nameTable,
+                    columnId,
+                    id
+            );
+            ResultSet rs = st.executeQuery(query);
+
+            task = new Task(
+                    rs.getString(columnTitle),
+                    rs.getString(columnDescription),
+                    rs.getInt(columnId)
+            );
+            rs.close();
+
+            return task;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return task;
+        }
     }
 
     @Override
     public void close() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        try {
+            connection.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
     }
 
     @Override

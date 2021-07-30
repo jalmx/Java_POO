@@ -54,14 +54,16 @@ public class WindowMain extends javax.swing.JFrame {
         }
 
         listTaskUI.setModel(modelo);
+        taDescripcion.setText("");
     }
 
-    public void newTaskAction(){
-          OpticionTask addTaskView = new OpticionTask(this, true, Constant.ADD);
+    public void newTaskAction() {
+        OpticionTask addTaskView = new OpticionTask(this, true, Constant.ADD);
         addTaskView.setLocationRelativeTo(this);
         addTaskView.setVisible(true);
         loadTasks();
     }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -89,6 +91,7 @@ public class WindowMain extends javax.swing.JFrame {
         jMenu2 = new javax.swing.JMenu();
         jMenuItem4 = new javax.swing.JMenuItem();
         jMenuItem5 = new javax.swing.JMenuItem();
+        jMenuItem6 = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Todo App");
@@ -149,6 +152,11 @@ public class WindowMain extends javax.swing.JFrame {
         });
 
         btnDone.setText("Done");
+        btnDone.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnDoneActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
@@ -170,6 +178,7 @@ public class WindowMain extends javax.swing.JFrame {
 
         jMenu1.setText("File");
 
+        jMenuItem1.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_N, java.awt.event.InputEvent.CTRL_DOWN_MASK));
         jMenuItem1.setText("New task");
         jMenuItem1.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -178,21 +187,32 @@ public class WindowMain extends javax.swing.JFrame {
         });
         jMenu1.add(jMenuItem1);
 
-        jMenuItem2.setText("Save notes .csv");
+        jMenuItem2.setText("Export CSV");
         jMenu1.add(jMenuItem2);
 
-        jMenuItem3.setText("Save notes .txt");
+        jMenuItem3.setText("Export txt");
         jMenu1.add(jMenuItem3);
 
         jMenuBar1.add(jMenu1);
 
         jMenu2.setText("Edit");
 
+        jMenuItem4.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_E, java.awt.event.InputEvent.CTRL_DOWN_MASK));
         jMenuItem4.setText("Edit");
         jMenu2.add(jMenuItem4);
 
+        jMenuItem5.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_ENTER, java.awt.event.InputEvent.CTRL_DOWN_MASK));
         jMenuItem5.setText("Done");
         jMenu2.add(jMenuItem5);
+
+        jMenuItem6.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_F5, 0));
+        jMenuItem6.setText("Update");
+        jMenuItem6.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItem6ActionPerformed(evt);
+            }
+        });
+        jMenu2.add(jMenuItem6);
 
         jMenuBar1.add(jMenu2);
 
@@ -226,26 +246,71 @@ public class WindowMain extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnNewTaskActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNewTaskActionPerformed
-      newTaskAction();
+        newTaskAction();
     }//GEN-LAST:event_btnNewTaskActionPerformed
 
     private void btnEditActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEditActionPerformed
-        OpticionTask addTaskView = new OpticionTask(this, true, Constant.EDIT);
-        addTaskView.setLocationRelativeTo(this);
-        addTaskView.setVisible(true);
+        int positionList = this.listTaskUI.getSelectedIndex();
+
+        if (positionList != -1) {
+            int id = listTask.get(positionList).getId();
+            OpticionTask addTaskView = new OpticionTask(this, true, Constant.EDIT, id);
+            addTaskView.setLocationRelativeTo(this);
+            addTaskView.setVisible(true);
+            loadTasks();
+        } else {
+            JOptionPane.showMessageDialog(this, "No selected task", "No task", JOptionPane.WARNING_MESSAGE);
+        }
+
     }//GEN-LAST:event_btnEditActionPerformed
 
     private void listTaskUIMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_listTaskUIMouseClicked
-        
+
         Log.print("El indice %d", this.listTaskUI.getSelectedIndex());
+
+        try {
+            String description = listTask.get(this.listTaskUI.getSelectedIndex()).getDescripcion();
+            taDescripcion.setText(description);
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Without task, you need to add :D");
+        }
+            
         
-        String description = listTask.get(this.listTaskUI.getSelectedIndex()).getDescripcion();
-        taDescripcion.setText(description);
+
     }//GEN-LAST:event_listTaskUIMouseClicked
 
     private void jMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem1ActionPerformed
         newTaskAction();
     }//GEN-LAST:event_jMenuItem1ActionPerformed
+
+    private void btnDoneActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDoneActionPerformed
+        int position = listTaskUI.getSelectedIndex();
+        Log.print("Id seleccionado %d", position);
+        if (position != -1) {
+            try {
+                int anwser = JOptionPane.showConfirmDialog(this, "Are you sure done!!!");
+
+                Log.print(String.valueOf(anwser));
+
+                if (JOptionPane.YES_OPTION == anwser) {
+                    DB.getDatabase().delete(listTask.get(position).getId());
+                    JOptionPane.showMessageDialog(this, "Task done!!!");
+                }
+
+                loadTasks();
+            } catch (Exception e) {
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Can't delete task", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        } else {
+            JOptionPane.showMessageDialog(this, "No selected task", "No task", JOptionPane.WARNING_MESSAGE);
+        }
+
+    }//GEN-LAST:event_btnDoneActionPerformed
+
+    private void jMenuItem6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem6ActionPerformed
+        loadTasks();
+    }//GEN-LAST:event_jMenuItem6ActionPerformed
 
     /**
      * @param args the command line arguments
@@ -294,6 +359,7 @@ public class WindowMain extends javax.swing.JFrame {
     private javax.swing.JMenuItem jMenuItem3;
     private javax.swing.JMenuItem jMenuItem4;
     private javax.swing.JMenuItem jMenuItem5;
+    private javax.swing.JMenuItem jMenuItem6;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;

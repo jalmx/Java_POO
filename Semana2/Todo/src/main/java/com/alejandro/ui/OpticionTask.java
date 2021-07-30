@@ -17,41 +17,61 @@ import javax.swing.JOptionPane;
  */
 public class OpticionTask extends javax.swing.JDialog {
 
-    
-   
 //    public OpticionTask(java.awt.Frame parent, boolean modal) {
 //        super(parent, modal);
 //        initComponents();
 //    }
-    
     private int type = -1;
-    
-     public OpticionTask(java.awt.Frame parent, boolean modal, int type) {
+    private int id = -1;
+
+    public OpticionTask(java.awt.Frame parent, boolean modal, int type) {
         super(parent, modal);
         initComponents();
-        
+
         this.type = type;
-        
-        if(type == Constant.ADD){
+
+        if (type == Constant.ADD) {
             labelTitle.setText(Constant.TITLE_ADD);
             btnOk.setText(Constant.TITLE_BTN_ADD);
-        }else if(type == Constant.EDIT){
+        } else if (type == Constant.EDIT) {
             labelTitle.setText(Constant.TITLE_EDIT);
             btnOk.setText(Constant.TITLE_BTN_EDIT);
         }
     }
 
-     
-     private Task createTask(){
-         Task task = new Task();
-         
-         task
-            .setTitle(inputTitle.getText())
-            .setDescripcion(taDescription.getText());
-         
-         return task;
-     }
-     
+    public OpticionTask(java.awt.Frame parent, boolean modal, int type, int idTask) {
+        this(parent, modal, type);
+        loadTask(idTask);
+        this.id = idTask;
+    }
+
+    private void loadTask(int id) {
+        try {
+            Task task =  DB.getDatabase().get(id);
+            Log.print("Cargando la task: %s",task.toString());
+            loadTaskUI(task);
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showConfirmDialog(this, "Failed to load task", "Fail load", JOptionPane.ERROR_MESSAGE);
+        }
+        
+    }
+    
+    private void loadTaskUI(Task task){
+        inputTitle.setText(task.getTitle());
+        taDescription.setText(task.getDescripcion());
+    }
+
+    private Task createTask() {
+        Task task = new Task();
+
+        task
+                .setTitle(inputTitle.getText())
+                .setDescripcion(taDescription.getText());
+
+        return task;
+    }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -164,21 +184,29 @@ public class OpticionTask extends javax.swing.JDialog {
     }//GEN-LAST:event_btnCancelActionPerformed
 
     private void btnOkActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnOkActionPerformed
-        Task task = createTask();
-        try{
-            if(type == Constant.ADD){
+        try {
+            Task task = createTask();
+            String message = "";
+            if (type == Constant.ADD) {
                 Log.print(task.toString());
                 DB.getDatabase().insert(task);
-                JOptionPane.showMessageDialog(this, "Task saved");
-                this.dispose();
+               message = "Task saved";
             }
-        }catch(Exception e){
-            e.printStackTrace();           
+            if(type == Constant.EDIT){
+                Log.print(task.toString());
+                task.setId(id);
+                DB.getDatabase().update(task);
+                message = "Task updated";
+            }
+            
+             JOptionPane.showMessageDialog(this, message);
+                this.dispose();
+        } catch (Exception e) {
+            e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Failed insert database", "Fail insert", JOptionPane.ERROR_MESSAGE);
         }
-        
-        
-        
+
+
     }//GEN-LAST:event_btnOkActionPerformed
 
     /**
@@ -211,7 +239,7 @@ public class OpticionTask extends javax.swing.JDialog {
         /* Create and display the dialog */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                OpticionTask dialog = new OpticionTask(new javax.swing.JFrame(), true,-1);
+                OpticionTask dialog = new OpticionTask(new javax.swing.JFrame(), true, -1);
                 dialog.addWindowListener(new java.awt.event.WindowAdapter() {
                     @Override
                     public void windowClosing(java.awt.event.WindowEvent e) {
